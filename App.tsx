@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { AppState, Item, Collection, SortOption } from './types';
 import { SEED_DATA, COLORS } from './constants';
 import { Sidebar } from './components/Sidebar';
@@ -24,7 +24,7 @@ function useStickyState<T>(defaultValue: T, key: string): [T, React.Dispatch<Rea
 
 const App = () => {
   // --- State ---
-  const [appState, setAppState] = useStickyState<AppState>(SEED_DATA, 'shelf-app-data-v1');
+  const [appState, setAppState] = useStickyState<AppState>(SEED_DATA, 'shelf-app-data-v2');
   const [activeView, setActiveView] = useState<string>('all'); // 'all', 'favorites', or collection ID
   const [searchQuery, setSearchQuery] = useState('');
   const [sortOption, setSortOption] = useState<SortOption>('date_desc');
@@ -86,23 +86,23 @@ const App = () => {
 
   // --- Handlers ---
 
-  const handleCreateCollection = (newCol: Collection) => {
+  const handleCreateCollection = useCallback((newCol: Collection) => {
     setAppState(prev => ({
       ...prev,
       collections: [...prev.collections, newCol]
     }));
     setActiveView(newCol.id);
-  };
+  }, []);
 
-  const handleSaveItem = (item: Item) => {
+  const handleSaveItem = useCallback((item: Item) => {
     setAppState(prev => {
       const isNew = !prev.items[item.id];
       const updatedItems = { ...prev.items, [item.id]: item };
-      
+
       let updatedCollections = prev.collections;
       if (isNew) {
-        updatedCollections = prev.collections.map(c => 
-          c.id === item.collectionId 
+        updatedCollections = prev.collections.map(c =>
+          c.id === item.collectionId
             ? { ...c, itemIds: [item.id, ...c.itemIds] }
             : c
         );
@@ -114,38 +114,39 @@ const App = () => {
         collections: updatedCollections
       };
     });
-  };
+  }, []);
 
-  const handleDeleteItem = (itemId: string) => {
-      setAppState(prev => {
-          const item = prev.items[itemId];
-          if (!item) return prev;
+  const handleDeleteItem = useCallback((itemId: string) => {
+    setAppState(prev => {
+      const item = prev.items[itemId];
+      if (!item) return prev;
 
-          const newItems = { ...prev.items };
-          delete newItems[itemId];
+      const newItems = { ...prev.items };
+      delete newItems[itemId];
 
-          const newCollections = prev.collections.map(c => 
-            c.id === item.collectionId ? { ...c, itemIds: c.itemIds.filter(id => id !== itemId) } : c
-          );
+      const newCollections = prev.collections.map(c =>
+        c.id === item.collectionId ? { ...c, itemIds: c.itemIds.filter(id => id !== itemId) } : c
+      );
 
-          return { ...prev, items: newItems, collections: newCollections };
-      });
-  };
+      return { ...prev, items: newItems, collections: newCollections };
+    });
+  }, []);
 
-  const openNewItemModal = () => {
+  const openNewItemModal = useCallback(() => {
     if (activeView === 'all' || activeView === 'favorites') {
-        // If in overview, assume adding to the first collection or prompt (simplification: first collection)
-        if (appState.collections.length > 0) {
-            setActiveView(appState.collections[0].id);
-        }
+      if (appState.collections.length > 0) {
+        setActiveView(appState.collections[0].id);
+      }
     }
     setSelectedItem(null);
     setItemModalOpen(true);
-  };
+  }, [activeView, appState.collections]);
 
-  const toggleDarkMode = () => {
+  const toggleDarkMode = useCallback(() => {
     setAppState(prev => ({ ...prev, darkMode: !prev.darkMode }));
-  };
+  }, []);
+
+  const handleOpenCollectionModal = useCallback(() => setCollectionModalOpen(true), []);
 
   // --- Effects ---
   useEffect(() => {
@@ -167,23 +168,23 @@ const App = () => {
     <div className="flex h-screen w-screen overflow-hidden bg-stone-50 dark:bg-stone-950 text-stone-900 dark:text-stone-50 font-sans">
       
       {/* Desktop Sidebar */}
-      <aside className="hidden md:block w-64 h-full shrink-0">
-        <Sidebar 
-          collections={appState.collections} 
-          activeView={activeView} 
+      <aside className="hidden md:block w-60 h-full shrink-0">
+        <Sidebar
+          collections={appState.collections}
+          activeView={activeView}
           onSelectView={setActiveView}
-          onAddCollection={() => setCollectionModalOpen(true)}
+          onAddCollection={handleOpenCollectionModal}
         />
       </aside>
 
       {/* Mobile Sidebar Sheet */}
       <Sheet isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)}>
-         <Sidebar 
-          collections={appState.collections} 
-          activeView={activeView} 
+        <Sidebar
+          collections={appState.collections}
+          activeView={activeView}
           onSelectView={(id) => { setActiveView(id); setIsSidebarOpen(false); }}
           className="bg-transparent border-none p-0"
-          onAddCollection={() => { setCollectionModalOpen(true); setIsSidebarOpen(false); }}
+          onAddCollection={() => { handleOpenCollectionModal(); setIsSidebarOpen(false); }}
         />
       </Sheet>
 
@@ -227,22 +228,26 @@ const App = () => {
         </header>
 
         {/* Toolbar (Sort/Filter) */}
-        <div className="h-12 border-b border-stone-200 dark:border-stone-800 flex items-center px-4 sm:px-8 gap-4 overflow-x-auto no-scrollbar bg-stone-50/30 dark:bg-stone-950/30">
-            <span className="text-xs font-semibold text-stone-400 uppercase tracking-wider">Sort by</span>
-            <select 
-                value={sortOption} 
-                onChange={(e) => setSortOption(e.target.value as SortOption)}
-                className="bg-transparent text-sm font-medium text-stone-600 dark:text-stone-300 border-none outline-none cursor-pointer hover:text-stone-900"
-            >
-                <option value="date_desc">Newest First</option>
-                <option value="date_asc">Oldest First</option>
-                <option value="title_asc">Title (A-Z)</option>
-                <option value="rating_desc">Highest Rated</option>
-            </select>
-            
-            <div className="w-px h-4 bg-stone-300 dark:bg-stone-700 mx-2" />
-            
-            <span className="text-xs text-stone-400">{filteredItems.length} items found</span>
+        <div className="h-11 border-b border-stone-100 dark:border-stone-800/60 flex items-center px-4 sm:px-8 gap-3 overflow-x-auto no-scrollbar bg-stone-50/50 dark:bg-stone-950/50">
+            <div className="flex items-center gap-2">
+                <Lucide.ArrowUpDown size={12} className="text-stone-400" />
+                <select
+                    value={sortOption}
+                    onChange={(e) => setSortOption(e.target.value as SortOption)}
+                    className="bg-transparent text-xs font-medium text-stone-500 dark:text-stone-400 border-none outline-none cursor-pointer hover:text-stone-900 dark:hover:text-stone-100 transition-colors"
+                >
+                    <option value="date_desc">Newest first</option>
+                    <option value="date_asc">Oldest first</option>
+                    <option value="title_asc">Title (A–Z)</option>
+                    <option value="rating_desc">Highest rated</option>
+                </select>
+            </div>
+
+            <div className="w-px h-3.5 bg-stone-200 dark:bg-stone-700" />
+
+            <span className="text-xs text-stone-400 dark:text-stone-600 tabular-nums">
+                {filteredItems.length} {filteredItems.length === 1 ? 'item' : 'items'}
+            </span>
         </div>
 
         {/* Grid Content */}
@@ -267,22 +272,46 @@ const App = () => {
                 </div>
             ) : (
                 <div className="flex flex-col items-center justify-center h-full text-stone-400 pb-20">
-                    <div className="w-16 h-16 bg-stone-100 dark:bg-stone-900 rounded-full flex items-center justify-center mb-4">
-                        <Lucide.PackageOpen size={32} className="opacity-50" />
+                    <div className="w-14 h-14 bg-stone-100 dark:bg-stone-900 rounded-2xl flex items-center justify-center mb-5">
+                        <Lucide.PackageOpen size={26} className="opacity-40" />
                     </div>
-                    <p className="text-lg font-serif mb-2">The shelf is empty</p>
-                    <p className="text-sm">Start collecting your interests.</p>
+                    <p className="text-xl font-serif text-stone-700 dark:text-stone-300 mb-1.5">
+                        {appState.collections.length === 0 ? 'Create a collection' : 'Nothing here yet'}
+                    </p>
+                    <p className="text-sm text-stone-400 mb-6">
+                        {appState.collections.length === 0
+                            ? 'Organise your interests into collections.'
+                            : 'Add items to start filling this shelf.'}
+                    </p>
+                    {appState.collections.length === 0 ? (
+                        <button
+                            onClick={() => setCollectionModalOpen(true)}
+                            className="flex items-center gap-2 px-4 py-2 bg-stone-900 dark:bg-stone-100 text-stone-50 dark:text-stone-900 rounded-lg text-sm font-medium hover:bg-stone-800 dark:hover:bg-stone-200 transition-colors shadow-sm"
+                        >
+                            <Lucide.Plus size={15} />
+                            New Collection
+                        </button>
+                    ) : currentCollection && (
+                        <button
+                            onClick={openNewItemModal}
+                            className="flex items-center gap-2 px-4 py-2 bg-stone-900 dark:bg-stone-100 text-stone-50 dark:text-stone-900 rounded-lg text-sm font-medium hover:bg-stone-800 dark:hover:bg-stone-200 transition-colors shadow-sm"
+                        >
+                            <Lucide.Plus size={15} />
+                            Add Item
+                        </button>
+                    )}
                 </div>
             )}
         </div>
 
         {/* Floating Action Button */}
-        {currentCollection && (
-            <button 
+        {appState.collections.length > 0 && (
+            <button
                 onClick={openNewItemModal}
-                className="absolute bottom-8 right-8 h-14 w-14 rounded-full bg-stone-900 dark:bg-stone-100 text-stone-50 dark:text-stone-900 shadow-lg hover:scale-105 hover:shadow-xl transition-all flex items-center justify-center z-20 group"
+                className="absolute bottom-8 right-8 h-13 w-13 rounded-full bg-stone-900 dark:bg-stone-100 text-stone-50 dark:text-stone-900 shadow-lg hover:scale-105 hover:shadow-xl transition-all flex items-center justify-center z-20 group"
+                style={{ height: '3.25rem', width: '3.25rem' }}
             >
-                <Lucide.Plus size={24} className="group-hover:rotate-90 transition-transform duration-300" />
+                <Lucide.Plus size={22} className="group-hover:rotate-90 transition-transform duration-300" />
             </button>
         )}
       </main>
@@ -299,7 +328,7 @@ const App = () => {
         />
       )}
 
-      <CollectionModal 
+      <CollectionModal
         isOpen={collectionModalOpen}
         onClose={() => setCollectionModalOpen(false)}
         onSave={handleCreateCollection}
