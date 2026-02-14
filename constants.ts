@@ -1,8 +1,7 @@
 import { AppState, Collection, Item, FieldDefinition } from './types';
-import { v4 as uuidv4 } from 'uuid'; // We will mock uuid since we can't install packages
+import { v4 as uuidv4 } from 'uuid';
 
-// Simple UUID generator for this environment
-const generateId = () => Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+const generateId = () => uuidv4();
 
 export const COLORS = [
   { name: 'Stone', value: 'stone', class: 'bg-stone-100 text-stone-800 dark:bg-stone-800 dark:text-stone-200' },
