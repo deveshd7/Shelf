@@ -101,8 +101,6 @@ export const CollectionModal = ({ isOpen, onClose, onSave }: CollectionModalProp
                       : "bg-white text-stone-500 border-stone-200 hover:border-stone-400"
                   )}
                 >
-                  <Lucide.Icon name={i} size={16} /> {/* Note: Assuming Lucide.Icon works via the wrapper in UI.tsx, actually UI.tsx uses Icon component */}
-                  {/* Fixing Icon rendering below */}
                   {(Lucide as any)[i] ? React.createElement((Lucide as any)[i], {size: 16}) : null}
                 </button>
               ))}
