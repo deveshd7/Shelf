@@ -36,8 +36,12 @@ export const ItemCard: React.FC<ItemCardProps> = React.memo(({ item, collection,
   return (
     <div
       onClick={onClick}
+      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onClick(); } }}
+      role="button"
+      tabIndex={0}
+      aria-label={`Open ${String(title || 'item')}${item.isFavorite ? ' (favorited)' : ''}`}
       className={cn(
-        "group relative break-inside-avoid rounded-xl border bg-white dark:bg-stone-900 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg cursor-pointer overflow-hidden mb-5",
+        "group relative break-inside-avoid rounded-xl border bg-white dark:bg-stone-900 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg cursor-pointer overflow-hidden mb-5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:ring-offset-2",
         item.isFavorite
           ? "border-amber-300/60 dark:border-amber-600/30 ring-1 ring-amber-200/60 dark:ring-amber-700/20"
           : "border-stone-200 dark:border-stone-800"

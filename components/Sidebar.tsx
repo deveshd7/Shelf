@@ -25,6 +25,7 @@ const NavItem: React.FC<NavItemProps> = React.memo(({ id, icon, label, count, on
   return (
     <button
       onClick={() => onClick(id)}
+      aria-current={isActive ? 'page' : undefined}
       className={cn(
         "w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-all duration-150 mb-0.5 group",
         isActive
@@ -38,7 +39,7 @@ const NavItem: React.FC<NavItemProps> = React.memo(({ id, icon, label, count, on
           isActive
             ? "text-stone-400 dark:text-stone-600"
             : "text-stone-400 dark:text-stone-500 group-hover:text-stone-600 dark:group-hover:text-stone-300"
-        )}>
+        )} aria-hidden="true">
           {typeof icon === 'string' ? <Icon name={icon} size={15} /> : icon}
         </span>
         <span className="truncate">{label}</span>
@@ -49,7 +50,7 @@ const NavItem: React.FC<NavItemProps> = React.memo(({ id, icon, label, count, on
           isActive
             ? "bg-white/15 dark:bg-black/10 text-stone-300 dark:text-stone-600"
             : "text-stone-400 opacity-0 group-hover:opacity-100 bg-stone-200/70 dark:bg-stone-700/70"
-        )}>
+        )} aria-label={`${count} item${count !== 1 ? 's' : ''}`}>
           {count}
         </span>
       )}
@@ -65,16 +66,16 @@ export const Sidebar = React.memo(({ collections, activeView, onSelectView, clas
     )}>
       {/* Logo */}
       <div className="flex items-center gap-2.5 px-2 mb-6 pt-1">
-        <div className="w-7 h-7 bg-stone-900 dark:bg-stone-50 rounded-lg flex items-center justify-center shadow-sm">
+        <div className="w-7 h-7 bg-stone-900 dark:bg-stone-50 rounded-lg flex items-center justify-center shadow-sm" aria-hidden="true">
           <span className="text-stone-50 dark:text-stone-900 font-serif font-bold text-[15px] leading-none">S</span>
         </div>
         <span className="font-serif font-semibold text-[17px] tracking-tight text-stone-900 dark:text-stone-100">Shelf</span>
       </div>
 
-      <div className="flex-1 overflow-y-auto no-scrollbar space-y-5">
+      <nav aria-label="Shelf navigation" className="flex-1 overflow-y-auto no-scrollbar space-y-5">
         {/* Library Views */}
         <div>
-          <p className="text-[9px] font-bold uppercase tracking-widest text-stone-400 dark:text-stone-600 px-3 mb-1.5">Library</p>
+          <p className="text-[9px] font-bold uppercase tracking-widest text-stone-400 dark:text-stone-600 px-3 mb-1.5" aria-hidden="true">Library</p>
           <NavItem
             id="all"
             icon={<Lucide.Layers size={15} />}
@@ -94,11 +95,11 @@ export const Sidebar = React.memo(({ collections, activeView, onSelectView, clas
         {/* Collections */}
         <div>
           <div className="flex items-center justify-between px-3 mb-1.5">
-            <p className="text-[9px] font-bold uppercase tracking-widest text-stone-400 dark:text-stone-600">Collections</p>
+            <p className="text-[9px] font-bold uppercase tracking-widest text-stone-400 dark:text-stone-600" aria-hidden="true">Collections</p>
             <button
               onClick={onAddCollection}
-              className="text-stone-400 hover:text-stone-700 dark:hover:text-stone-300 transition-colors p-0.5 rounded"
-              title="New Collection"
+              aria-label="New collection"
+              className="text-stone-400 hover:text-stone-700 dark:hover:text-stone-300 transition-colors p-0.5 rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-stone-400"
             >
               <Lucide.Plus size={13} />
             </button>
@@ -129,7 +130,7 @@ export const Sidebar = React.memo(({ collections, activeView, onSelectView, clas
             ))
           )}
         </div>
-      </div>
+      </nav>
     </div>
   );
 });

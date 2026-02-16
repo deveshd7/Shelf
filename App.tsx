@@ -168,7 +168,7 @@ const App = () => {
     <div className="flex h-screen w-screen overflow-hidden bg-stone-50 dark:bg-stone-950 text-stone-900 dark:text-stone-50 font-sans">
       
       {/* Desktop Sidebar */}
-      <aside className="hidden md:block w-60 h-full shrink-0">
+      <aside className="hidden md:block w-60 h-full shrink-0" aria-label="Navigation">
         <Sidebar
           collections={appState.collections}
           activeView={activeView}
@@ -194,7 +194,12 @@ const App = () => {
         {/* Top Header */}
         <header className="h-16 border-b border-stone-200 dark:border-stone-800 flex items-center justify-between px-4 sm:px-8 bg-white/50 dark:bg-stone-950/50 backdrop-blur-sm z-10">
             <div className="flex items-center gap-4">
-                <button onClick={() => setIsSidebarOpen(true)} className="md:hidden p-2 -ml-2 text-stone-500">
+                <button
+                    onClick={() => setIsSidebarOpen(true)}
+                    aria-label="Open navigation"
+                    aria-expanded={isSidebarOpen}
+                    className="md:hidden p-2 -ml-2 text-stone-500 rounded-lg hover:bg-stone-100 dark:hover:bg-stone-800 transition-colors"
+                >
                     <Lucide.Menu size={20} />
                 </button>
                 <div className="flex flex-col">
@@ -211,17 +216,31 @@ const App = () => {
 
             <div className="flex items-center gap-3">
                 <div className="relative hidden sm:block">
-                    <Lucide.Search className="absolute left-2.5 top-1/2 -translate-y-1/2 text-stone-400" size={14} />
-                    <input 
-                        type="text" 
-                        placeholder="Search..." 
+                    <Lucide.Search className="absolute left-2.5 top-1/2 -translate-y-1/2 text-stone-400 pointer-events-none" size={14} aria-hidden="true" />
+                    <input
+                        type="search"
+                        aria-label="Search items"
+                        placeholder="Search..."
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
-                        className="h-9 w-48 lg:w-64 rounded-full bg-stone-100 dark:bg-stone-900 border-none pl-9 pr-4 text-sm focus:ring-1 focus:ring-stone-400 outline-none transition-all"
+                        className="h-9 w-48 lg:w-64 rounded-full bg-stone-100 dark:bg-stone-900 border-none pl-9 pr-8 text-sm focus:ring-2 focus:ring-stone-400 outline-none transition-all"
                     />
+                    {searchQuery && (
+                        <button
+                            onClick={() => setSearchQuery('')}
+                            aria-label="Clear search"
+                            className="absolute right-2.5 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-700 dark:hover:text-stone-300 transition-colors rounded-full p-0.5"
+                        >
+                            <Lucide.X size={13} />
+                        </button>
+                    )}
                 </div>
-                
-                <button onClick={toggleDarkMode} className="p-2 text-stone-400 hover:text-stone-900 dark:hover:text-stone-100 transition-colors">
+
+                <button
+                    onClick={toggleDarkMode}
+                    aria-label={appState.darkMode ? 'Switch to light mode' : 'Switch to dark mode'}
+                    className="p-2 text-stone-400 hover:text-stone-900 dark:hover:text-stone-100 transition-colors rounded-lg hover:bg-stone-100 dark:hover:bg-stone-800"
+                >
                     {appState.darkMode ? <Lucide.Sun size={18} /> : <Lucide.Moon size={18} />}
                 </button>
             </div>
@@ -230,8 +249,10 @@ const App = () => {
         {/* Toolbar (Sort/Filter) */}
         <div className="h-11 border-b border-stone-100 dark:border-stone-800/60 flex items-center px-4 sm:px-8 gap-3 overflow-x-auto no-scrollbar bg-stone-50/50 dark:bg-stone-950/50">
             <div className="flex items-center gap-2">
-                <Lucide.ArrowUpDown size={12} className="text-stone-400" />
+                <Lucide.ArrowUpDown size={12} className="text-stone-400" aria-hidden="true" />
+                <label htmlFor="sort-select" className="sr-only">Sort items by</label>
                 <select
+                    id="sort-select"
                     value={sortOption}
                     onChange={(e) => setSortOption(e.target.value as SortOption)}
                     className="bg-transparent text-xs font-medium text-stone-500 dark:text-stone-400 border-none outline-none cursor-pointer hover:text-stone-900 dark:hover:text-stone-100 transition-colors"
@@ -243,9 +264,9 @@ const App = () => {
                 </select>
             </div>
 
-            <div className="w-px h-3.5 bg-stone-200 dark:bg-stone-700" />
+            <div className="w-px h-3.5 bg-stone-200 dark:bg-stone-700" aria-hidden="true" />
 
-            <span className="text-xs text-stone-400 dark:text-stone-600 tabular-nums">
+            <span role="status" aria-live="polite" aria-atomic="true" className="text-xs text-stone-400 dark:text-stone-600 tabular-nums">
                 {filteredItems.length} {filteredItems.length === 1 ? 'item' : 'items'}
             </span>
         </div>
@@ -273,17 +294,34 @@ const App = () => {
             ) : (
                 <div className="flex flex-col items-center justify-center h-full text-stone-400 pb-20">
                     <div className="w-14 h-14 bg-stone-100 dark:bg-stone-900 rounded-2xl flex items-center justify-center mb-5">
-                        <Lucide.PackageOpen size={26} className="opacity-40" />
+                        {searchQuery
+                            ? <Lucide.SearchX size={26} className="opacity-40" />
+                            : <Lucide.PackageOpen size={26} className="opacity-40" />
+                        }
                     </div>
                     <p className="text-xl font-serif text-stone-700 dark:text-stone-300 mb-1.5">
-                        {appState.collections.length === 0 ? 'Create a collection' : 'Nothing here yet'}
+                        {searchQuery
+                            ? 'No results found'
+                            : appState.collections.length === 0
+                                ? 'Create a collection'
+                                : 'Nothing here yet'}
                     </p>
                     <p className="text-sm text-stone-400 mb-6">
-                        {appState.collections.length === 0
-                            ? 'Organise your interests into collections.'
-                            : 'Add items to start filling this shelf.'}
+                        {searchQuery
+                            ? `No items match "${searchQuery}"`
+                            : appState.collections.length === 0
+                                ? 'Organise your interests into collections.'
+                                : 'Add items to start filling this shelf.'}
                     </p>
-                    {appState.collections.length === 0 ? (
+                    {searchQuery ? (
+                        <button
+                            onClick={() => setSearchQuery('')}
+                            className="flex items-center gap-2 px-4 py-2 bg-stone-900 dark:bg-stone-100 text-stone-50 dark:text-stone-900 rounded-lg text-sm font-medium hover:bg-stone-800 dark:hover:bg-stone-200 transition-colors shadow-sm"
+                        >
+                            <Lucide.X size={15} />
+                            Clear search
+                        </button>
+                    ) : appState.collections.length === 0 ? (
                         <button
                             onClick={() => setCollectionModalOpen(true)}
                             className="flex items-center gap-2 px-4 py-2 bg-stone-900 dark:bg-stone-100 text-stone-50 dark:text-stone-900 rounded-lg text-sm font-medium hover:bg-stone-800 dark:hover:bg-stone-200 transition-colors shadow-sm"
@@ -308,10 +346,11 @@ const App = () => {
         {appState.collections.length > 0 && (
             <button
                 onClick={openNewItemModal}
+                aria-label="Add new item"
                 className="absolute bottom-8 right-8 h-13 w-13 rounded-full bg-stone-900 dark:bg-stone-100 text-stone-50 dark:text-stone-900 shadow-lg hover:scale-105 hover:shadow-xl transition-all flex items-center justify-center z-20 group"
                 style={{ height: '3.25rem', width: '3.25rem' }}
             >
-                <Lucide.Plus size={22} className="group-hover:rotate-90 transition-transform duration-300" />
+                <Lucide.Plus size={22} className="group-hover:rotate-90 transition-transform duration-300" aria-hidden="true" />
             </button>
         )}
       </main>

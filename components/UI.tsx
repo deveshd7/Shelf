@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useId } from 'react';
 import * as Lucide from 'lucide-react';
 
 export const cn = (...classes: (string | undefined | null | false)[]) => classes.filter(Boolean).join(' ');
@@ -17,8 +17,8 @@ export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElemen
 }
 
 export const Button: React.FC<ButtonProps> = ({ variant = 'primary', size = 'md', className, ...props }) => {
-  const base = "inline-flex items-center justify-center rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-stone-400 disabled:pointer-events-none disabled:opacity-50";
-  
+  const base = "inline-flex items-center justify-center rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:ring-offset-1 disabled:pointer-events-none disabled:opacity-50";
+
   const variants = {
     primary: "bg-stone-900 text-stone-50 hover:bg-stone-900/90 dark:bg-stone-50 dark:text-stone-900 dark:hover:bg-stone-50/90 shadow-sm",
     secondary: "bg-white text-stone-900 border border-stone-200 hover:bg-stone-100 dark:bg-stone-800 dark:text-stone-50 dark:border-stone-700 dark:hover:bg-stone-700",
@@ -42,13 +42,14 @@ export const Input = React.forwardRef<HTMLInputElement, React.InputHTMLAttribute
     <input
       ref={ref}
       className={cn(
-        "flex h-9 w-full rounded-md border border-stone-200 bg-transparent px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-stone-400 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-stone-400 disabled:cursor-not-allowed disabled:opacity-50 dark:border-stone-800 dark:placeholder:text-stone-600 dark:focus-visible:ring-stone-400",
+        "flex h-9 w-full rounded-md border border-stone-200 bg-transparent px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-stone-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:ring-offset-1 disabled:cursor-not-allowed disabled:opacity-50 dark:border-stone-800 dark:placeholder:text-stone-600",
         className
       )}
       {...props}
     />
   );
 });
+Input.displayName = 'Input';
 
 // --- Textarea ---
 export const Textarea = React.forwardRef<HTMLTextAreaElement, React.TextareaHTMLAttributes<HTMLTextAreaElement>>(({ className, ...props }, ref) => {
@@ -56,52 +57,94 @@ export const Textarea = React.forwardRef<HTMLTextAreaElement, React.TextareaHTML
     <textarea
       ref={ref}
       className={cn(
-        "flex min-h-[60px] w-full rounded-md border border-stone-200 bg-transparent px-3 py-2 text-sm shadow-sm placeholder:text-stone-400 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-stone-400 disabled:cursor-not-allowed disabled:opacity-50 dark:border-stone-800 dark:placeholder:text-stone-600",
+        "flex min-h-[60px] w-full rounded-md border border-stone-200 bg-transparent px-3 py-2 text-sm shadow-sm placeholder:text-stone-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:ring-offset-1 disabled:cursor-not-allowed disabled:opacity-50 dark:border-stone-800 dark:placeholder:text-stone-600",
         className
       )}
       {...props}
     />
   );
 });
+Textarea.displayName = 'Textarea';
 
 // --- Modal / Dialog ---
 export interface ModalProps {
-    isOpen: boolean; 
-    onClose: () => void; 
-    title?: string; 
-    children: React.ReactNode; 
+    isOpen: boolean;
+    onClose: () => void;
+    title?: string;
+    children: React.ReactNode;
     maxWidth?: string;
 }
 
 export const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children, maxWidth = "max-w-md" }) => {
-  const overlayRef = useRef<HTMLDivElement>(null);
+  const dialogRef = useRef<HTMLDivElement>(null);
+  const titleId = useId();
 
   useEffect(() => {
-    const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
+    if (!isOpen) return;
+
+    // Focus the first focusable element when modal opens
+    const timer = setTimeout(() => {
+      const el = dialogRef.current;
+      if (!el) return;
+      const first = el.querySelector<HTMLElement>(
+        'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+      );
+      first?.focus();
+    }, 50);
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') { onClose(); return; }
+      if (e.key !== 'Tab') return;
+
+      const el = dialogRef.current;
+      if (!el) return;
+      const focusable = Array.from(el.querySelectorAll<HTMLElement>(
+        'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+      ));
+      if (!focusable.length) return;
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+
+      if (e.shiftKey) {
+        if (document.activeElement === first) { e.preventDefault(); last.focus(); }
+      } else {
+        if (document.activeElement === last) { e.preventDefault(); first.focus(); }
+      }
     };
-    if (isOpen) document.addEventListener('keydown', handleEscape);
-    return () => document.removeEventListener('keydown', handleEscape);
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+      clearTimeout(timer);
+    };
   }, [isOpen, onClose]);
 
   if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6">
-      <div 
-        className="fixed inset-0 bg-stone-950/20 backdrop-blur-sm dark:bg-stone-950/40 transition-opacity" 
-        onClick={onClose} 
+      <div
+        className="fixed inset-0 bg-stone-950/20 backdrop-blur-sm dark:bg-stone-950/40 transition-opacity"
+        onClick={onClose}
         aria-hidden="true"
       />
-      <div 
+      <div
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={title ? titleId : undefined}
         className={cn(
           "relative w-full transform rounded-xl border border-stone-200 bg-white p-6 shadow-xl transition-all dark:border-stone-800 dark:bg-stone-900 animate-in fade-in zoom-in-95 duration-200",
           maxWidth
         )}
       >
         <div className="flex items-center justify-between mb-4">
-          {title && <h2 className="text-lg font-serif font-semibold text-stone-900 dark:text-stone-50">{title}</h2>}
-          <button onClick={onClose} className="rounded-full p-1 hover:bg-stone-100 dark:hover:bg-stone-800 transition-colors">
+          {title && <h2 id={titleId} className="text-lg font-serif font-semibold text-stone-900 dark:text-stone-50">{title}</h2>}
+          <button
+            onClick={onClose}
+            aria-label="Close dialog"
+            className="rounded-full p-1.5 hover:bg-stone-100 dark:hover:bg-stone-800 transition-colors ml-auto focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-stone-400"
+          >
             <Lucide.X size={18} className="text-stone-500" />
           </button>
         </div>
@@ -127,18 +170,30 @@ export const Badge = ({ children, className, variant = "default" }: { children: 
 
 // --- Sheet (Sidebar Slide-over) ---
 export interface SheetProps {
-    isOpen: boolean; 
-    onClose: () => void; 
+    isOpen: boolean;
+    onClose: () => void;
     children: React.ReactNode;
 }
 
 export const Sheet: React.FC<SheetProps> = ({ isOpen, onClose, children }) => {
+  useEffect(() => {
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    if (isOpen) document.addEventListener('keydown', handleEscape);
+    return () => document.removeEventListener('keydown', handleEscape);
+  }, [isOpen, onClose]);
+
   if (!isOpen) return null;
   return (
-    <div className="fixed inset-0 z-50 flex">
-      <div className="fixed inset-0 bg-stone-950/20 backdrop-blur-sm" onClick={onClose} />
+    <div className="fixed inset-0 z-50 flex" role="dialog" aria-modal="true" aria-label="Navigation menu">
+      <div className="fixed inset-0 bg-stone-950/20 backdrop-blur-sm" onClick={onClose} aria-hidden="true" />
       <div className="relative flex h-full w-3/4 max-w-xs flex-col overflow-y-auto border-r border-stone-200 bg-white p-6 shadow-xl dark:border-stone-800 dark:bg-stone-950 animate-in slide-in-from-left duration-300">
-        <button onClick={onClose} className="absolute right-4 top-4 rounded-full p-2 hover:bg-stone-100 dark:hover:bg-stone-800">
+        <button
+          onClick={onClose}
+          aria-label="Close navigation menu"
+          className="absolute right-4 top-4 rounded-full p-2 hover:bg-stone-100 dark:hover:bg-stone-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-stone-400"
+        >
           <Lucide.X size={18} className="text-stone-500" />
         </button>
         {children}
