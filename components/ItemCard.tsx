@@ -2,11 +2,13 @@ import React from 'react';
 import { Item, Collection } from '../types';
 import { cn, Icon } from './UI';
 import * as Lucide from 'lucide-react';
+import { motion } from 'framer-motion';
 
 interface ItemCardProps {
   item: Item;
   collection: Collection;
   onClick: () => void;
+  index?: number;
 }
 
 const getStatusStyle = (status: string): string => {
@@ -20,7 +22,7 @@ const getStatusStyle = (status: string): string => {
   return 'bg-stone-50 border-stone-200 text-stone-500 dark:bg-stone-800/60 dark:border-stone-700 dark:text-stone-400';
 };
 
-export const ItemCard: React.FC<ItemCardProps> = React.memo(({ item, collection, onClick }) => {
+export const ItemCard: React.FC<ItemCardProps> = React.memo(({ item, collection, onClick, index = 0 }) => {
   const titleField = collection.fields.find(f => f.name.toLowerCase() === 'title') || collection.fields[0];
   const imageField = collection.fields.find(f => f.type === 'image');
   const ratingField = collection.fields.find(f => f.type === 'rating');
@@ -34,18 +36,23 @@ export const ItemCard: React.FC<ItemCardProps> = React.memo(({ item, collection,
   const status = statusField ? item.fieldValues[statusField.id] : null;
 
   return (
-    <div
+    <motion.div
       onClick={onClick}
       onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onClick(); } }}
       role="button"
       tabIndex={0}
       aria-label={`Open ${String(title || 'item')}${item.isFavorite ? ' (favorited)' : ''}`}
       className={cn(
-        "group relative break-inside-avoid rounded-xl border bg-white dark:bg-stone-900 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg cursor-pointer overflow-hidden mb-5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:ring-offset-2",
+        "group relative break-inside-avoid rounded-xl border bg-white dark:bg-stone-900 shadow-sm hover:shadow-md cursor-pointer overflow-hidden mb-5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:ring-offset-2",
         item.isFavorite
           ? "border-amber-300/60 dark:border-amber-600/30 ring-1 ring-amber-200/60 dark:ring-amber-700/20"
           : "border-stone-200 dark:border-stone-800"
       )}
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ type: 'spring', stiffness: 300, damping: 28, delay: Math.min(index * 0.04, 0.25) }}
+      whileHover={{ y: -4 }}
+      whileTap={{ scale: 0.98 }}
     >
       {/* Cover Image — portrait ratio for books/movies */}
       {imageUrl && (
@@ -60,7 +67,7 @@ export const ItemCard: React.FC<ItemCardProps> = React.memo(({ item, collection,
             }}
           />
           {/* Gradient overlay */}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-black/5 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/35 via-black/5 to-transparent" />
 
           {/* Favorite badge */}
           {item.isFavorite && (
@@ -99,7 +106,7 @@ export const ItemCard: React.FC<ItemCardProps> = React.memo(({ item, collection,
       )}
 
       {/* Card Content */}
-      <div className={cn("space-y-2", imageUrl ? "p-3.5" : "px-4 py-4")}>
+      <div className={cn("space-y-2", imageUrl ? "p-4" : "px-4 py-4")}>
         {/* Title row */}
         <div className="flex items-start justify-between gap-2">
           <h3 className={cn(
@@ -161,6 +168,6 @@ export const ItemCard: React.FC<ItemCardProps> = React.memo(({ item, collection,
           </div>
         )}
       </div>
-    </div>
+    </motion.div>
   );
 });

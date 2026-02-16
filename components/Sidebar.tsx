@@ -2,6 +2,7 @@ import React from 'react';
 import { Collection } from '../types';
 import { cn, Icon } from './UI';
 import * as Lucide from 'lucide-react';
+import { motion } from 'framer-motion';
 
 interface SidebarProps {
   collections: Collection[];
@@ -23,15 +24,17 @@ interface NavItemProps {
 
 const NavItem: React.FC<NavItemProps> = React.memo(({ id, icon, label, count, onClick, isActive }) => {
   return (
-    <button
+    <motion.button
       onClick={() => onClick(id)}
       aria-current={isActive ? 'page' : undefined}
       className={cn(
-        "w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-all duration-150 mb-0.5 group",
+        "w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-colors duration-150 mb-0.5 group",
         isActive
           ? "bg-stone-900 dark:bg-stone-100 text-stone-50 dark:text-stone-900 shadow-sm font-medium"
           : "text-stone-600 dark:text-stone-400 hover:bg-stone-100 dark:hover:bg-stone-800/60 hover:text-stone-900 dark:hover:text-stone-200"
       )}
+      whileHover={{ x: 2 }}
+      transition={{ type: 'spring', stiffness: 400, damping: 30 }}
     >
       <div className="flex items-center gap-2.5">
         <span className={cn(
@@ -54,7 +57,7 @@ const NavItem: React.FC<NavItemProps> = React.memo(({ id, icon, label, count, on
           {count}
         </span>
       )}
-    </button>
+    </motion.button>
   );
 });
 

@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useId } from 'react';
 import * as Lucide from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 export const cn = (...classes: (string | undefined | null | false)[]) => classes.filter(Boolean).join(' ');
 
@@ -119,38 +120,48 @@ export const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children, 
     };
   }, [isOpen, onClose]);
 
-  if (!isOpen) return null;
-
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6">
-      <div
-        className="fixed inset-0 bg-stone-950/20 backdrop-blur-sm dark:bg-stone-950/40 transition-opacity"
-        onClick={onClose}
-        aria-hidden="true"
-      />
-      <div
-        ref={dialogRef}
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby={title ? titleId : undefined}
-        className={cn(
-          "relative w-full transform rounded-xl border border-stone-200 bg-white p-6 shadow-xl transition-all dark:border-stone-800 dark:bg-stone-900 animate-in fade-in zoom-in-95 duration-200",
-          maxWidth
-        )}
-      >
-        <div className="flex items-center justify-between mb-4">
-          {title && <h2 id={titleId} className="text-lg font-serif font-semibold text-stone-900 dark:text-stone-50">{title}</h2>}
-          <button
+    <AnimatePresence>
+      {isOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6">
+          <motion.div
+            className="fixed inset-0 bg-stone-950/20 backdrop-blur-sm dark:bg-stone-950/40"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.18 }}
             onClick={onClose}
-            aria-label="Close dialog"
-            className="rounded-full p-1.5 hover:bg-stone-100 dark:hover:bg-stone-800 transition-colors ml-auto focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-stone-400"
+            aria-hidden="true"
+          />
+          <motion.div
+            ref={dialogRef}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby={title ? titleId : undefined}
+            className={cn(
+              "relative w-full rounded-xl border border-stone-200 bg-white p-6 shadow-xl dark:border-stone-800 dark:bg-stone-900",
+              maxWidth
+            )}
+            initial={{ opacity: 0, scale: 0.96, y: 8 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.96, y: 8 }}
+            transition={{ type: 'spring', stiffness: 340, damping: 30 }}
           >
-            <Lucide.X size={18} className="text-stone-500" />
-          </button>
+            <div className="flex items-center justify-between mb-4">
+              {title && <h2 id={titleId} className="text-lg font-serif font-semibold text-stone-900 dark:text-stone-50">{title}</h2>}
+              <button
+                onClick={onClose}
+                aria-label="Close dialog"
+                className="rounded-full p-1.5 hover:bg-stone-100 dark:hover:bg-stone-800 transition-colors ml-auto focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-stone-400"
+              >
+                <Lucide.X size={18} className="text-stone-500" />
+              </button>
+            </div>
+            {children}
+          </motion.div>
         </div>
-        {children}
-      </div>
-    </div>
+      )}
+    </AnimatePresence>
   );
 };
 
@@ -184,20 +195,37 @@ export const Sheet: React.FC<SheetProps> = ({ isOpen, onClose, children }) => {
     return () => document.removeEventListener('keydown', handleEscape);
   }, [isOpen, onClose]);
 
-  if (!isOpen) return null;
   return (
-    <div className="fixed inset-0 z-50 flex" role="dialog" aria-modal="true" aria-label="Navigation menu">
-      <div className="fixed inset-0 bg-stone-950/20 backdrop-blur-sm" onClick={onClose} aria-hidden="true" />
-      <div className="relative flex h-full w-3/4 max-w-xs flex-col overflow-y-auto border-r border-stone-200 bg-white p-6 shadow-xl dark:border-stone-800 dark:bg-stone-950 animate-in slide-in-from-left duration-300">
-        <button
-          onClick={onClose}
-          aria-label="Close navigation menu"
-          className="absolute right-4 top-4 rounded-full p-2 hover:bg-stone-100 dark:hover:bg-stone-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-stone-400"
-        >
-          <Lucide.X size={18} className="text-stone-500" />
-        </button>
-        {children}
-      </div>
-    </div>
+    <AnimatePresence>
+      {isOpen && (
+        <div className="fixed inset-0 z-50 flex" role="dialog" aria-modal="true" aria-label="Navigation menu">
+          <motion.div
+            className="fixed inset-0 bg-stone-950/20 backdrop-blur-sm"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.18 }}
+            onClick={onClose}
+            aria-hidden="true"
+          />
+          <motion.div
+            className="relative flex h-full w-3/4 max-w-xs flex-col overflow-y-auto border-r border-stone-200 bg-white p-6 shadow-xl dark:border-stone-800 dark:bg-stone-950"
+            initial={{ x: '-100%' }}
+            animate={{ x: 0 }}
+            exit={{ x: '-100%' }}
+            transition={{ type: 'spring', stiffness: 320, damping: 32 }}
+          >
+            <button
+              onClick={onClose}
+              aria-label="Close navigation menu"
+              className="absolute right-4 top-4 rounded-full p-2 hover:bg-stone-100 dark:hover:bg-stone-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-stone-400"
+            >
+              <Lucide.X size={18} className="text-stone-500" />
+            </button>
+            {children}
+          </motion.div>
+        </div>
+      )}
+    </AnimatePresence>
   );
 };

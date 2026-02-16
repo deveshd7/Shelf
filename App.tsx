@@ -7,6 +7,7 @@ import { ItemModal } from './components/ItemModal';
 import { CollectionModal } from './components/CollectionModal';
 import { Button, Input, Sheet, Icon, cn } from './components/UI';
 import * as Lucide from 'lucide-react';
+import { AnimatePresence } from 'framer-motion';
 
 // Hook for localStorage persistence
 function useStickyState<T>(defaultValue: T, key: string): [T, React.Dispatch<React.SetStateAction<T>>] {
@@ -275,18 +276,19 @@ const App = () => {
         <div className="flex-1 overflow-y-auto p-4 sm:p-8">
             {filteredItems.length > 0 ? (
                 <div className="columns-1 sm:columns-2 lg:columns-3 xl:columns-4 gap-6 space-y-6 pb-20">
-                    {filteredItems.map(item => {
+                    {filteredItems.map((item, index) => {
                         const col = appState.collections.find(c => c.id === item.collectionId);
                         if (!col) return null;
                         return (
-                            <ItemCard 
-                                key={item.id} 
-                                item={item} 
-                                collection={col} 
+                            <ItemCard
+                                key={item.id}
+                                index={index}
+                                item={item}
+                                collection={col}
                                 onClick={() => {
                                     setSelectedItem(item);
                                     setItemModalOpen(true);
-                                }} 
+                                }}
                             />
                         );
                     })}
@@ -355,13 +357,13 @@ const App = () => {
         )}
       </main>
 
-      {/* Modals */}
-      {itemModalOpen && modalCollection && (
-        <ItemModal 
+      {/* Modals — always render when collection is available so exit animations play */}
+      {modalCollection && (
+        <ItemModal
             isOpen={itemModalOpen}
             onClose={() => setItemModalOpen(false)}
             item={selectedItem}
-            collection={modalCollection} // If viewing "All", selectedItem defines collection. If adding, uses currentCollection.
+            collection={modalCollection}
             onSave={handleSaveItem}
             onDelete={handleDeleteItem}
         />
