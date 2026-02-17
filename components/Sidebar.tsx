@@ -1,8 +1,8 @@
-import React from 'react';
-import { Collection } from '../types';
+import React, { useState } from 'react';
+import { Collection, Item } from '../types';
 import { cn, Icon } from './UI';
 import * as Lucide from 'lucide-react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 
 interface SidebarProps {
   collections: Collection[];
@@ -10,6 +10,9 @@ interface SidebarProps {
   onSelectView: (view: string) => void;
   className?: string;
   onAddCollection: () => void;
+  onEditCollection: (col: Collection) => void;
+  onDeleteCollection: (col: Collection) => void;
+  items: Record<string, Item>;
 }
 
 interface NavItemProps {
@@ -62,7 +65,7 @@ const NavItem: React.FC<NavItemProps> = React.memo(({ id, icon, label, count, co
           "text-[10px] py-0.5 px-1.5 rounded-full min-w-[1.25rem] text-center font-medium transition-all",
           isActive
             ? "bg-white/15 dark:bg-black/10 text-stone-300 dark:text-stone-600"
-            : "text-stone-400 opacity-0 group-hover:opacity-100 bg-stone-200/70 dark:bg-stone-700/70"
+            : "text-stone-400 bg-stone-200/70 dark:bg-stone-700/70"
         )} aria-label={`${count} item${count !== 1 ? 's' : ''}`}>
           {count}
         </span>
@@ -71,7 +74,118 @@ const NavItem: React.FC<NavItemProps> = React.memo(({ id, icon, label, count, co
   );
 });
 
-export const Sidebar = React.memo(({ collections, activeView, onSelectView, className, onAddCollection }: SidebarProps) => {
+interface CollectionNavItemProps {
+  collection: Collection;
+  isActive: boolean;
+  itemCount: number;
+  onSelect: (id: string) => void;
+  onEdit: (col: Collection) => void;
+  onDelete: (col: Collection) => void;
+}
+
+const CollectionNavItem: React.FC<CollectionNavItemProps> = React.memo(({
+  collection,
+  isActive,
+  itemCount,
+  onSelect,
+  onEdit,
+  onDelete,
+}) => {
+  const [isHovered, setIsHovered] = useState(false);
+
+  return (
+    <div
+      className="relative mb-0.5"
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
+      <motion.button
+        onClick={() => onSelect(collection.id)}
+        aria-current={isActive ? 'page' : undefined}
+        className={cn(
+          "w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-colors duration-150 group cursor-pointer",
+          isActive
+            ? "bg-stone-900 dark:bg-stone-100 text-stone-50 dark:text-stone-900 shadow-sm font-medium"
+            : "text-stone-600 dark:text-stone-400 hover:bg-stone-100 dark:hover:bg-stone-800/60 hover:text-stone-900 dark:hover:text-stone-200"
+        )}
+        whileHover={{ x: 2 }}
+        transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+      >
+        <div className="flex items-center gap-2.5 min-w-0">
+          <span className={cn(
+            "transition-colors shrink-0",
+            isActive
+              ? "text-stone-400 dark:text-stone-600"
+              : collectionIconColor[collection.color] || 'text-stone-400'
+          )} aria-hidden="true">
+            <Icon name={collection.icon} size={15} />
+          </span>
+          <span className="truncate">{collection.name}</span>
+        </div>
+
+        <AnimatePresence mode="wait">
+          {isHovered && !isActive ? (
+            <motion.div
+              key="actions"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.1 }}
+              className="flex items-center gap-0.5 shrink-0"
+              onClick={e => e.stopPropagation()}
+            >
+              <button
+                onClick={(e) => { e.stopPropagation(); onEdit(collection); }}
+                aria-label={`Edit ${collection.name}`}
+                className="p-1 rounded text-stone-400 hover:text-stone-700 hover:bg-stone-200/60 dark:hover:text-stone-200 dark:hover:bg-stone-700/60 transition-colors"
+              >
+                <Lucide.Pencil size={12} />
+              </button>
+              <button
+                onClick={(e) => { e.stopPropagation(); onDelete(collection); }}
+                aria-label={`Delete ${collection.name}`}
+                className="p-1 rounded text-stone-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+              >
+                <Lucide.Trash2 size={12} />
+              </button>
+            </motion.div>
+          ) : (
+            <motion.span
+              key="count"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.1 }}
+              className={cn(
+                "text-[10px] py-0.5 px-1.5 rounded-full min-w-[1.25rem] text-center font-medium transition-all shrink-0",
+                isActive
+                  ? "bg-white/15 dark:bg-black/10 text-stone-300 dark:text-stone-600"
+                  : "text-stone-400 bg-stone-200/70 dark:bg-stone-700/70"
+              )}
+              aria-label={`${itemCount} item${itemCount !== 1 ? 's' : ''}`}
+            >
+              {itemCount}
+            </motion.span>
+          )}
+        </AnimatePresence>
+      </motion.button>
+    </div>
+  );
+});
+
+export const Sidebar = React.memo(({
+  collections,
+  activeView,
+  onSelectView,
+  className,
+  onAddCollection,
+  onEditCollection,
+  onDeleteCollection,
+  items,
+}: SidebarProps) => {
+  const totalItems = Object.keys(items).length;
+  const favoriteCount = Object.values(items).filter(i => i.isFavorite).length;
+
   return (
     <div className={cn(
       "flex flex-col h-full bg-white dark:bg-stone-950 border-r border-stone-100 dark:border-stone-800/60 p-3",
@@ -93,6 +207,7 @@ export const Sidebar = React.memo(({ collections, activeView, onSelectView, clas
             id="all"
             icon={<Lucide.Layers size={15} />}
             label="All Items"
+            count={totalItems}
             isActive={activeView === 'all'}
             onClick={onSelectView}
           />
@@ -100,6 +215,7 @@ export const Sidebar = React.memo(({ collections, activeView, onSelectView, clas
             id="favorites"
             icon={<Lucide.Heart size={15} />}
             label="Favorites"
+            count={favoriteCount}
             isActive={activeView === 'favorites'}
             onClick={onSelectView}
           />
@@ -129,18 +245,20 @@ export const Sidebar = React.memo(({ collections, activeView, onSelectView, clas
               </button>
             </div>
           ) : (
-            collections.map(col => (
-              <NavItem
-                key={col.id}
-                id={col.id}
-                icon={col.icon}
-                label={col.name}
-                count={col.itemIds.length}
-                color={col.color}
-                isActive={activeView === col.id}
-                onClick={onSelectView}
-              />
-            ))
+            collections.map(col => {
+              const itemCount = Object.values(items).filter(i => i.collectionId === col.id).length;
+              return (
+                <CollectionNavItem
+                  key={col.id}
+                  collection={col}
+                  isActive={activeView === col.id}
+                  itemCount={itemCount}
+                  onSelect={onSelectView}
+                  onEdit={onEditCollection}
+                  onDelete={onDeleteCollection}
+                />
+              );
+            })
           )}
         </div>
       </nav>

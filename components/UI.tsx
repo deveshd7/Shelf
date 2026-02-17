@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useId } from 'react';
+import React, { useEffect, useRef, useId, useState } from 'react';
 import * as Lucide from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -175,6 +175,161 @@ export const Badge = ({ children, className, variant = "default" }: { children: 
   return (
     <div className={cn("inline-flex items-center rounded-md px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-stone-400 focus:ring-offset-2", variants[variant], className)}>
       {children}
+    </div>
+  );
+};
+
+// --- AlertDialog ---
+export interface AlertDialogProps {
+  isOpen: boolean;
+  title: string;
+  description: string;
+  confirmLabel?: string;
+  cancelLabel?: string;
+  variant?: 'danger' | 'default';
+  onConfirm: () => void;
+  onCancel: () => void;
+}
+
+export const AlertDialog: React.FC<AlertDialogProps> = ({
+  isOpen,
+  title,
+  description,
+  confirmLabel = 'Confirm',
+  cancelLabel = 'Cancel',
+  variant = 'default',
+  onConfirm,
+  onCancel,
+}) => {
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onCancel();
+    };
+    if (isOpen) document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onCancel]);
+
+  return (
+    <AnimatePresence>
+      {isOpen && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
+          <motion.div
+            className="fixed inset-0 bg-stone-950/30 backdrop-blur-sm"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.15 }}
+            onClick={onCancel}
+            aria-hidden="true"
+          />
+          <motion.div
+            role="alertdialog"
+            aria-modal="true"
+            className="relative w-full max-w-sm rounded-xl border border-stone-200 bg-white p-6 shadow-2xl dark:border-stone-800 dark:bg-stone-900"
+            initial={{ opacity: 0, scale: 0.94, y: 8 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.94, y: 8 }}
+            transition={{ type: 'spring', stiffness: 380, damping: 32 }}
+          >
+            <div className="flex flex-col items-center text-center gap-3">
+              <div className="w-11 h-11 rounded-full bg-red-50 dark:bg-red-900/20 flex items-center justify-center">
+                <Lucide.AlertTriangle size={22} className="text-red-500" />
+              </div>
+              <div>
+                <h2 className="text-base font-semibold text-stone-900 dark:text-stone-50">{title}</h2>
+                <p className="mt-1 text-sm text-stone-500 dark:text-stone-400">{description}</p>
+              </div>
+            </div>
+            <div className="mt-5 flex gap-3">
+              <Button variant="secondary" className="flex-1" onClick={onCancel}>{cancelLabel}</Button>
+              <Button
+                variant={variant === 'danger' ? 'danger' : 'primary'}
+                className="flex-1"
+                onClick={onConfirm}
+              >
+                {confirmLabel}
+              </Button>
+            </div>
+          </motion.div>
+        </div>
+      )}
+    </AnimatePresence>
+  );
+};
+
+// --- TagInput ---
+export interface TagInputProps {
+  id?: string;
+  value: string[];
+  onChange: (tags: string[]) => void;
+  placeholder?: string;
+}
+
+export const TagInput: React.FC<TagInputProps> = ({ id, value, onChange, placeholder = 'Add a tag…' }) => {
+  const [draft, setDraft] = useState('');
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const commitDraft = () => {
+    const trimmed = draft.trim().replace(/^,+|,+$/g, '');
+    if (!trimmed) { setDraft(''); return; }
+    const newTags = trimmed.split(',').map(s => s.trim()).filter(Boolean);
+    const unique = newTags.filter(t => !value.includes(t));
+    if (unique.length > 0) onChange([...value, ...unique]);
+    setDraft('');
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter' || e.key === ',') {
+      e.preventDefault();
+      commitDraft();
+    } else if (e.key === 'Backspace' && draft === '' && value.length > 0) {
+      onChange(value.slice(0, -1));
+    }
+  };
+
+  const removeTag = (index: number) => {
+    onChange(value.filter((_, i) => i !== index));
+  };
+
+  return (
+    <div
+      className="flex flex-wrap gap-1.5 min-h-[36px] w-full rounded-md border border-stone-200 dark:border-stone-800 bg-transparent px-2.5 py-1.5 cursor-text focus-within:ring-2 focus-within:ring-stone-400 focus-within:ring-offset-1"
+      onClick={() => inputRef.current?.focus()}
+    >
+      <AnimatePresence initial={false}>
+        {value.map((tag, i) => (
+          <motion.span
+            key={tag}
+            layout
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.8 }}
+            transition={{ type: 'spring', stiffness: 400, damping: 28 }}
+            className="inline-flex items-center gap-1 bg-stone-100 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 text-stone-700 dark:text-stone-300 text-xs rounded px-1.5 py-0.5"
+          >
+            <span className="text-stone-400">#</span>{tag}
+            <button
+              type="button"
+              onClick={(e) => { e.stopPropagation(); removeTag(i); }}
+              aria-label={`Remove tag ${tag}`}
+              className="text-stone-400 hover:text-stone-700 dark:hover:text-stone-200 transition-colors ml-0.5 leading-none"
+            >
+              <Lucide.X size={10} />
+            </button>
+          </motion.span>
+        ))}
+      </AnimatePresence>
+      <input
+        ref={inputRef}
+        id={id}
+        type="text"
+        value={draft}
+        onChange={e => setDraft(e.target.value)}
+        onKeyDown={handleKeyDown}
+        onBlur={commitDraft}
+        placeholder={value.length === 0 ? placeholder : ''}
+        className="flex-1 min-w-[80px] bg-transparent text-sm outline-none placeholder:text-stone-400 dark:placeholder:text-stone-600"
+      />
     </div>
   );
 };

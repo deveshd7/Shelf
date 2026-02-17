@@ -42,4 +42,9 @@ export interface AppState {
   sidebarOpen: boolean;
 }
 
-export type SortOption = 'date_desc' | 'date_asc' | 'title_asc' | 'rating_desc';
+export type SortOption = 'date_desc' | 'date_asc' | 'title_asc' | 'title_desc' | 'rating_desc' | 'rating_asc' | 'status_asc';
+
+export interface FilterOptions {
+  onlyHasRating: boolean;
+  statusValues: string[];
+}

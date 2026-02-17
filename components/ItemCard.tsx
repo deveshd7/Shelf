@@ -9,7 +9,16 @@ interface ItemCardProps {
   collection: Collection;
   onClick: () => void;
   index?: number;
+  showCollectionBadge?: boolean;
 }
+
+const collectionBadgeBg: Record<string, string> = {
+  stone:   'bg-stone-100 text-stone-600 dark:bg-stone-800 dark:text-stone-300',
+  amber:   'bg-amber-50 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300',
+  rose:    'bg-rose-50 text-rose-700 dark:bg-rose-900/30 dark:text-rose-300',
+  indigo:  'bg-indigo-50 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300',
+  emerald: 'bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300',
+};
 
 const cardAccentBorder: Record<string, string> = {
   stone:   'border-l-stone-300 dark:border-l-stone-600',
@@ -30,7 +39,7 @@ const getStatusStyle = (status: string): string => {
   return 'bg-stone-50 border-stone-200 text-stone-500 dark:bg-stone-800/60 dark:border-stone-700 dark:text-stone-400';
 };
 
-export const ItemCard: React.FC<ItemCardProps> = React.memo(({ item, collection, onClick, index = 0 }) => {
+export const ItemCard: React.FC<ItemCardProps> = React.memo(({ item, collection, onClick, index = 0, showCollectionBadge = false }) => {
   const titleField = collection.fields.find(f => f.name.toLowerCase() === 'title') || collection.fields[0];
   const imageField = collection.fields.find(f => f.type === 'image');
   const ratingField = collection.fields.find(f => f.type === 'rating');
@@ -175,6 +184,19 @@ export const ItemCard: React.FC<ItemCardProps> = React.memo(({ item, collection,
                 +{item.fieldValues[tagsField.id].length - 3}
               </span>
             )}
+          </div>
+        )}
+
+        {/* Collection badge — shown in "All Items" view */}
+        {showCollectionBadge && (
+          <div className="pt-0.5">
+            <span className={cn(
+              "inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-semibold uppercase tracking-wide",
+              collectionBadgeBg[collection.color] || collectionBadgeBg.stone
+            )}>
+              <Icon name={collection.icon} size={9} />
+              {collection.name}
+            </span>
           </div>
         )}
       </div>

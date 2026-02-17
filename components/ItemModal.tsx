@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Item, Collection, FieldDefinition } from '../types';
-import { Button, Input, Textarea, cn } from './UI';
+import { Button, Input, Textarea, TagInput, cn } from './UI';
 import * as Lucide from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -197,14 +197,42 @@ export const ItemModal = ({ item, collection, isOpen, onClose, onSave, onDelete 
         );
       case 'image':
         return (
-          <Input
-            id={inputId}
-            value={value || ''}
-            onChange={(e) => handleFieldChange(field.id, e.target.value)}
-            onPaste={(e) => handleImagePaste(e, field.id)}
-            placeholder="Paste image URL, or Ctrl+V to paste from clipboard"
-            type="text"
-          />
+          <div className="space-y-2">
+            <Input
+              id={inputId}
+              value={value || ''}
+              onChange={(e) => handleFieldChange(field.id, e.target.value)}
+              onPaste={(e) => handleImagePaste(e, field.id)}
+              placeholder="Paste image URL, or Ctrl+V to paste from clipboard"
+              type="text"
+            />
+            <AnimatePresence>
+              {value && (
+                <motion.div
+                  initial={{ opacity: 0, y: -4 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -4 }}
+                  transition={{ type: 'spring', stiffness: 300, damping: 28 }}
+                  className="relative inline-block"
+                >
+                  <img
+                    src={value}
+                    alt="Preview"
+                    className="w-20 h-20 object-cover rounded-lg border border-stone-200 dark:border-stone-700"
+                    onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => handleFieldChange(field.id, '')}
+                    aria-label="Clear image"
+                    className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-stone-800 text-white flex items-center justify-center hover:bg-red-500 transition-colors shadow-sm"
+                  >
+                    <Lucide.X size={10} />
+                  </button>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
         );
       case 'long_text':
         return (
@@ -282,11 +310,10 @@ export const ItemModal = ({ item, collection, isOpen, onClose, onSave, onDelete 
         );
       case 'tags':
         return (
-          <Input
+          <TagInput
             id={inputId}
-            value={Array.isArray(value) ? value.join(', ') : (value || '')}
-            onChange={(e) => handleFieldChange(field.id, e.target.value.split(',').map((s: string) => s.trim()))}
-            placeholder="Separate tags with commas..."
+            value={Array.isArray(value) ? value : (value ? String(value).split(',').map((s: string) => s.trim()).filter(Boolean) : [])}
+            onChange={(tags) => handleFieldChange(field.id, tags)}
           />
         );
       case 'date':
@@ -391,12 +418,7 @@ export const ItemModal = ({ item, collection, isOpen, onClose, onSave, onDelete 
                     </button>
                     {item && (
                       <button
-                        onClick={() => {
-                          if (confirm('Are you sure you want to delete this item?')) {
-                            onDelete(item.id);
-                            onClose();
-                          }
-                        }}
+                        onClick={() => onDelete(item.id)}
                         aria-label="Delete item"
                         className="p-2 rounded-full text-stone-400 hover:bg-red-50 hover:text-red-500 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400"
                       >
