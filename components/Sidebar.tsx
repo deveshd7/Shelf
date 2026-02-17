@@ -22,13 +22,21 @@ interface NavItemProps {
   isActive: boolean;
 }
 
-const NavItem: React.FC<NavItemProps> = React.memo(({ id, icon, label, count, onClick, isActive }) => {
+const collectionIconColor: Record<string, string> = {
+  stone:   'text-stone-500 dark:text-stone-400',
+  amber:   'text-amber-500 dark:text-amber-400',
+  rose:    'text-rose-500 dark:text-rose-400',
+  indigo:  'text-indigo-500 dark:text-indigo-400',
+  emerald: 'text-emerald-500 dark:text-emerald-400',
+};
+
+const NavItem: React.FC<NavItemProps> = React.memo(({ id, icon, label, count, color, onClick, isActive }) => {
   return (
     <motion.button
       onClick={() => onClick(id)}
       aria-current={isActive ? 'page' : undefined}
       className={cn(
-        "w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-colors duration-150 mb-0.5 group",
+        "w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm transition-colors duration-150 mb-0.5 group cursor-pointer",
         isActive
           ? "bg-stone-900 dark:bg-stone-100 text-stone-50 dark:text-stone-900 shadow-sm font-medium"
           : "text-stone-600 dark:text-stone-400 hover:bg-stone-100 dark:hover:bg-stone-800/60 hover:text-stone-900 dark:hover:text-stone-200"
@@ -41,7 +49,9 @@ const NavItem: React.FC<NavItemProps> = React.memo(({ id, icon, label, count, on
           "transition-colors",
           isActive
             ? "text-stone-400 dark:text-stone-600"
-            : "text-stone-400 dark:text-stone-500 group-hover:text-stone-600 dark:group-hover:text-stone-300"
+            : color
+              ? collectionIconColor[color] || 'text-stone-400'
+              : "text-stone-400 dark:text-stone-500 group-hover:text-stone-600 dark:group-hover:text-stone-300"
         )} aria-hidden="true">
           {typeof icon === 'string' ? <Icon name={icon} size={15} /> : icon}
         </span>
@@ -69,8 +79,8 @@ export const Sidebar = React.memo(({ collections, activeView, onSelectView, clas
     )}>
       {/* Logo */}
       <div className="flex items-center gap-2.5 px-2 mb-6 pt-1">
-        <div className="w-7 h-7 bg-stone-900 dark:bg-stone-50 rounded-lg flex items-center justify-center shadow-sm" aria-hidden="true">
-          <span className="text-stone-50 dark:text-stone-900 font-serif font-bold text-[15px] leading-none">S</span>
+        <div className="w-7 h-7 bg-stone-900 dark:bg-stone-50 rounded-lg flex items-center justify-center shadow-sm ring-1 ring-black/5 dark:ring-white/10" aria-hidden="true">
+          <Lucide.BookMarked size={13} className="text-stone-50 dark:text-stone-900" />
         </div>
         <span className="font-serif font-semibold text-[17px] tracking-tight text-stone-900 dark:text-stone-100">Shelf</span>
       </div>
@@ -102,7 +112,7 @@ export const Sidebar = React.memo(({ collections, activeView, onSelectView, clas
             <button
               onClick={onAddCollection}
               aria-label="New collection"
-              className="text-stone-400 hover:text-stone-700 dark:hover:text-stone-300 transition-colors p-0.5 rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-stone-400"
+              className="text-stone-400 hover:text-stone-700 dark:hover:text-stone-300 transition-colors p-0.5 rounded cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-stone-400"
             >
               <Lucide.Plus size={13} />
             </button>

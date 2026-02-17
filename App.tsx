@@ -32,6 +32,7 @@ const App = () => {
   
   // UI State
   const [isSidebarOpen, setIsSidebarOpen] = useState(false); // Mobile
+  const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
   const [itemModalOpen, setItemModalOpen] = useState(false);
   const [collectionModalOpen, setCollectionModalOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState<Item | null>(null);
@@ -199,7 +200,7 @@ const App = () => {
                     onClick={() => setIsSidebarOpen(true)}
                     aria-label="Open navigation"
                     aria-expanded={isSidebarOpen}
-                    className="md:hidden p-2 -ml-2 text-stone-500 rounded-lg hover:bg-stone-100 dark:hover:bg-stone-800 transition-colors"
+                    className="md:hidden p-2 -ml-2 text-stone-500 rounded-lg hover:bg-stone-100 dark:hover:bg-stone-800 transition-colors cursor-pointer"
                 >
                     <Lucide.Menu size={20} />
                 </button>
@@ -216,6 +217,15 @@ const App = () => {
             </div>
 
             <div className="flex items-center gap-3">
+                <button
+                    onClick={() => setMobileSearchOpen(v => !v)}
+                    aria-label={mobileSearchOpen ? 'Close search' : 'Search items'}
+                    aria-expanded={mobileSearchOpen}
+                    className="sm:hidden p-2 text-stone-400 hover:text-stone-900 dark:hover:text-stone-100 transition-colors rounded-lg hover:bg-stone-100 dark:hover:bg-stone-800 cursor-pointer"
+                >
+                    {mobileSearchOpen ? <Lucide.X size={18} /> : <Lucide.Search size={18} />}
+                </button>
+
                 <div className="relative hidden sm:block">
                     <Lucide.Search className="absolute left-2.5 top-1/2 -translate-y-1/2 text-stone-400 pointer-events-none" size={14} aria-hidden="true" />
                     <input
@@ -240,12 +250,39 @@ const App = () => {
                 <button
                     onClick={toggleDarkMode}
                     aria-label={appState.darkMode ? 'Switch to light mode' : 'Switch to dark mode'}
-                    className="p-2 text-stone-400 hover:text-stone-900 dark:hover:text-stone-100 transition-colors rounded-lg hover:bg-stone-100 dark:hover:bg-stone-800"
+                    className="p-2 text-stone-400 hover:text-stone-900 dark:hover:text-stone-100 transition-colors rounded-lg hover:bg-stone-100 dark:hover:bg-stone-800 cursor-pointer"
                 >
                     {appState.darkMode ? <Lucide.Sun size={18} /> : <Lucide.Moon size={18} />}
                 </button>
             </div>
         </header>
+
+        {/* Mobile Search Bar */}
+        {mobileSearchOpen && (
+          <div className="sm:hidden px-4 py-2.5 border-b border-stone-100 dark:border-stone-800/60 bg-stone-50/50 dark:bg-stone-950/50">
+            <div className="relative">
+              <Lucide.Search className="absolute left-2.5 top-1/2 -translate-y-1/2 text-stone-400 pointer-events-none" size={14} aria-hidden="true" />
+              <input
+                autoFocus
+                type="search"
+                aria-label="Search items"
+                placeholder="Search..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="h-9 w-full rounded-full bg-stone-100 dark:bg-stone-900 border-none pl-9 pr-8 text-sm focus:ring-2 focus:ring-stone-400 outline-none transition-all"
+              />
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery('')}
+                  aria-label="Clear search"
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-700 dark:hover:text-stone-300 transition-colors cursor-pointer"
+                >
+                  <Lucide.X size={13} />
+                </button>
+              )}
+            </div>
+          </div>
+        )}
 
         {/* Toolbar (Sort/Filter) */}
         <div className="h-11 border-b border-stone-100 dark:border-stone-800/60 flex items-center px-4 sm:px-8 gap-3 overflow-x-auto no-scrollbar bg-stone-50/50 dark:bg-stone-950/50">
@@ -349,7 +386,7 @@ const App = () => {
             <button
                 onClick={openNewItemModal}
                 aria-label="Add new item"
-                className="absolute bottom-8 right-8 h-13 w-13 rounded-full bg-stone-900 dark:bg-stone-100 text-stone-50 dark:text-stone-900 shadow-lg hover:scale-105 hover:shadow-xl transition-all flex items-center justify-center z-20 group"
+                className="absolute bottom-8 right-8 h-13 w-13 rounded-full bg-stone-900 dark:bg-stone-100 text-stone-50 dark:text-stone-900 shadow-lg hover:-translate-y-1 hover:shadow-xl transition-all flex items-center justify-center z-20 group cursor-pointer"
                 style={{ height: '3.25rem', width: '3.25rem' }}
             >
                 <Lucide.Plus size={22} className="group-hover:rotate-90 transition-transform duration-300" aria-hidden="true" />

@@ -11,6 +11,14 @@ interface ItemCardProps {
   index?: number;
 }
 
+const cardAccentBorder: Record<string, string> = {
+  stone:   'border-l-stone-300 dark:border-l-stone-600',
+  amber:   'border-l-amber-400 dark:border-l-amber-600',
+  rose:    'border-l-rose-400 dark:border-l-rose-500',
+  indigo:  'border-l-indigo-400 dark:border-l-indigo-500',
+  emerald: 'border-l-emerald-400 dark:border-l-emerald-500',
+};
+
 const getStatusStyle = (status: string): string => {
   const s = status.toLowerCase();
   if (s === 'done' || s === 'complete' || s === 'completed' || s === 'watched' || s === 'read') {
@@ -46,7 +54,9 @@ export const ItemCard: React.FC<ItemCardProps> = React.memo(({ item, collection,
         "group relative break-inside-avoid rounded-xl border bg-white dark:bg-stone-900 shadow-sm hover:shadow-md cursor-pointer overflow-hidden mb-5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-stone-400 focus-visible:ring-offset-2",
         item.isFavorite
           ? "border-amber-300/60 dark:border-amber-600/30 ring-1 ring-amber-200/60 dark:ring-amber-700/20"
-          : "border-stone-200 dark:border-stone-800"
+          : "border-stone-200 dark:border-stone-800",
+        !imageUrl && "border-l-[3px]",
+        !imageUrl && (cardAccentBorder[collection.color] || 'border-l-stone-300 dark:border-l-stone-600')
       )}
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
@@ -156,7 +166,7 @@ export const ItemCard: React.FC<ItemCardProps> = React.memo(({ item, collection,
         {tagsField && Array.isArray(item.fieldValues[tagsField.id]) && item.fieldValues[tagsField.id].length > 0 && (
           <div className="flex flex-wrap gap-1 pt-0.5">
             {item.fieldValues[tagsField.id].slice(0, 3).map((tag: string, i: number) => (
-              <span key={i} className="text-[10px] text-stone-500 dark:text-stone-400 bg-stone-100 dark:bg-stone-800 px-1.5 py-0.5 rounded">
+              <span key={i} className="text-[10px] text-stone-500 dark:text-stone-400 bg-stone-100 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 px-1.5 py-0.5 rounded">
                 #{tag}
               </span>
             ))}
